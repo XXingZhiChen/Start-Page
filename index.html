@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Zen Local</title>
+
+<style>
+body {
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}
+
+/* 背景 */
+.bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    transform: scale(1.05);
+    transition: background-image 1s ease;
+    animation: drift 20s ease-in-out infinite;
+}
+
+@keyframes drift {
+    0% { transform: scale(1.06) translate(0px,0px); }
+    50% { transform: scale(1.1) translate(12px,-10px); }
+    100% { transform: scale(1.06) translate(0px,0px); }
+}
+
+/* 暗层 */
+.overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.25);
+}
+
+/* 中央 */
+.center {
+    position: relative;
+    text-align: center;
+}
+
+/* 时间 */
+#time {
+    font-size: 88px;
+    font-weight: 200;
+    letter-spacing: 3px;
+}
+
+/* 日期 */
+#date {
+    font-size: 14px;
+    opacity: 0.55;
+    margin-top: 6px;
+}
+
+/* 搜索（极简隐藏式） */
+input {
+    margin-top: 22px;
+    width: 260px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    border: none;
+    outline: none;
+    background: rgba(255,255,255,0.10);
+    color: white;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: 0.2s ease;
+}
+
+input.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+</style>
+</head>
+
+<body>
+
+<div class="bg" id="bg"></div>
+<div class="overlay"></div>
+
+<div class="center">
+    <div id="time">00:00</div>
+    <div id="date">----</div>
+    <input id="search" placeholder="搜索 / URL（按 / 呼出）" />
+</div>
+
+<script>
+/* ===== 本地壁纸 ===== */
+const wallpapers = {
+    morning: "morning.png",
+    day: "day.png",
+    night: "night.png"
+};
+
+function setBg() {
+    const h = new Date().getHours();
+    let img = wallpapers.day;
+
+    if (h < 6 || h >= 19) img = wallpapers.night;
+    else if (h < 11) img = wallpapers.morning;
+
+    document.getElementById("bg").style.backgroundImage = `url('${img}')`;
+}
+
+/* ===== 时间 ===== */
+function update() {
+    const now = new Date();
+    document.getElementById("time").textContent =
+        String(now.getHours()).padStart(2,'0') + ":" +
+        String(now.getMinutes()).padStart(2,'0');
+
+    document.getElementById("date").textContent =
+        now.toLocaleDateString("zh-CN", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric"
+        });
+}
+
+setInterval(update, 1000);
+update();
+setBg();
+
+/* ===== 搜索 ===== */
+const input = document.getElementById("search");
+
+document.addEventListener("keydown", (e) => {
+    if (e.key === "/") {
+        input.classList.add("show");
+        input.focus();
+        e.preventDefault();
+    }
+    if (e.key === "Escape") {
+        input.classList.remove("show");
+        input.blur();
+    }
+});
+
+input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        const q = input.value.trim();
+        if (!q) return;
+
+        const isUrl = q.includes(".") && !q.includes(" ");
+
+        location.href = isUrl
+            ? (q.startsWith("http") ? q : "https://" + q)
+            : "https://www.google.com/search?q=" + encodeURIComponent(q);
+    }
+});
+</script>
+
+</body>
+</html>
